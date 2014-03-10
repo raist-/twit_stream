@@ -1,6 +1,8 @@
 from TwitterAPI import TwitterAPI
-import concurrent.futures
 import redis
+import json
+import time
+import pprint
 
 class Stream_Server(object):
 
@@ -14,21 +16,34 @@ class Stream_Server(object):
         self.__api = TwitterAPI(consumer_key, consumer_secret, access_token_key, access_token_secret)
         self.__redis = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-    def stream_tweets(self, api, method, param_dict, time_to_live):
+        self.__pubsub = self.__redis.pubsub()
 
-        response = api.request(method, param_dict)
+    def stream_tweets(self, twitter_request, time_to_live):
+
+        response = self.__api.request(twitter_request['method'], twitter_request['param_dict'])
+
+        start = time.time()
+        elapsed = 0
+        
+        for item in response.get_iterator():
+            if (elapsed > time_to_live):
+                self.__redis.publish(twitter_request['channel'], 'END')
+                break
+            
+            self.__redis.publish(twitter_request['channel'], item)
+
+            elapsed = time.time() - start
+        
         
     def handle_stream_requests(self):
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            # Start the load operations and mark each future with its URL
-            future_to_url = {executor.submit(stream_tweets, url, 60): url for url in URLS}
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    data = future.result()
-                except Exception as exc:
-                    print('%r generated an exception: %s' % (url, exc))
-                else:
-                    print('%r page is %d bytes' % (url, len(data)))
+        serialized_request = self.__redis.brpop(['twitter_requests'], 1)
+
+        if serialized_request is not None:
+            pprint.pprint(serialized_request)
+            msg = serialized_request[1].decode("utf-8")
+            pprint.pprint(msg)
+            deserialized_request = json.loads(msg)
+
+            self.stream_tweets(deserialized_request, 15)
         
