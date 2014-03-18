@@ -29,6 +29,24 @@ if ('development' == app.get('env')) {
 
 require('./routes/index')(app);
 
-http.createServer(app).listen(app.get('port'), function(){
+var server = app.listen(app.get('port'), function () {
   console.log('Express server listening on port ' + app.get('port'));
+});
+
+var io = require('socket.io').listen(server);
+
+io.sockets.on('connection', function (socket) {
+
+    socket.emit('message', { message: 'welcome to the chat' });
+    socket.on('send', function (data) {
+	
+	console.log('Got here' + data);
+	console.log('Channel:' + data.channel);
+	console.log('Request:' + data.request);
+	var client = require('./client');
+	var c = new client(socket);
+	c.push_request(data);
+
+	console.log(data);
+    });
 });

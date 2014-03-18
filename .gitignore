@@ -1,0 +1,11 @@
+
+#ignore everything but python files
+*.*
+*#*.py
+*/node_modules/
+!*.py
+!*.js
+!*.json
+!*.css
+!*.html
+!*.jade

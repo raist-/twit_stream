@@ -9,10 +9,10 @@ class Stream_Server(object):
     def __init__(self, api_credentials_path):
         # read in the api setup credentials from file
 
-        consumer_key = ''
-        consumer_secret = ''
-        access_token_key = ''
-        access_token_secret = ''
+        consumer_key = 'ise3iDCoHcrXyMSYbLZKA'
+        consumer_secret = 'fg6FfGeuvlU8XQwjS7SWdnQ7jvT2t8hFloEJkCEGw'
+        access_token_key = '2371236566-ubGrPfBPHNvVtpOwQqgGwf6UOtN4Ab0KxSPzOVf'
+        access_token_secret = '5MHnzoHGNx3vk3oixCLBaz49ZdlJDRWWbbmVwEigjlQjy'
         self.__api = TwitterAPI(consumer_key, consumer_secret, access_token_key, access_token_secret)
         self.__redis = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -20,7 +20,7 @@ class Stream_Server(object):
 
     def stream_tweets(self, twitter_request, time_to_live):
 
-        response = self.__api.request(twitter_request['method'], twitter_request['param_dict'])
+        response = self.__api.request(twitter_request['method'], {"locations":"-74,40,-73,41"})
 
         start = time.time()
         elapsed = 0
